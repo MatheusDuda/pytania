@@ -3,16 +3,28 @@ import { getCycles, getSubjects, ApiError, type Cycle, type Subject } from "./ap
 import { Timer } from "./components/Timer";
 import { SubjectList } from "./components/SubjectList";
 import { ThemeToggle } from "./components/ThemeToggle";
+import { useStudySession } from "./hooks/useStudySession";
+import { formatTime } from "./lib/formatTime";
 
 type LoadState = "loading" | "success" | "error";
 
 function App() {
   const [cycles, setCycles] = useState<Cycle[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [cyclesState, setCyclesState] = useState<LoadState>("loading");
   const [subjectsState, setSubjectsState] = useState<LoadState>("loading");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const {
+    selectedSubject,
+    isRunning,
+    currentSeconds,
+    totalSeconds,
+    timeBySubjectId,
+    selectSubject,
+    toggleRunning,
+    resetCurrent,
+  } = useStudySession();
 
   useEffect(() => {
     let cancelled = false;
@@ -73,7 +85,10 @@ function App() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="flex items-center justify-between border-b border-brown/20 px-6 py-4">
-        <h1 className="text-xl font-bold">Sessão de Estudo</h1>
+        <div>
+          <h1 className="text-xl font-bold">Sessão de Estudo</h1>
+          <p className="text-sm text-foreground/70">Total estudado: {formatTime(totalSeconds)}</p>
+        </div>
         <ThemeToggle />
       </header>
 
@@ -97,13 +112,22 @@ function App() {
             <SubjectList
               subjects={subjects}
               selectedSubjectId={selectedSubject?.id ?? null}
-              onSelect={setSelectedSubject}
+              disabled={isRunning}
+              timeBySubjectId={timeBySubjectId}
+              onSelect={selectSubject}
             />
           )}
         </aside>
 
         <div className="flex flex-1 justify-center">
-          <Timer subjectName={selectedSubject?.name ?? null} />
+          <Timer
+            subjectName={selectedSubject?.name ?? null}
+            elapsedSeconds={currentSeconds}
+            isRunning={isRunning}
+            hasSubject={!!selectedSubject}
+            onToggle={toggleRunning}
+            onReset={resetCurrent}
+          />
         </div>
       </main>
     </div>

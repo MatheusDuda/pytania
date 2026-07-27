@@ -1,43 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { formatTime } from "../lib/formatTime";
 
 interface TimerProps {
   subjectName: string | null;
+  elapsedSeconds: number;
+  isRunning: boolean;
+  hasSubject: boolean;
+  onToggle: () => void;
+  onReset: () => void;
 }
 
-function formatTime(totalSeconds: number): string {
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  const pad = (value: number) => value.toString().padStart(2, "0");
-  return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-}
-
-export function Timer({ subjectName }: TimerProps) {
-  const [secondsElapsed, setSecondsElapsed] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
-  const intervalRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (!isRunning) return;
-
-    intervalRef.current = window.setInterval(() => {
-      setSecondsElapsed((prev) => prev + 1);
-    }, 1000);
-
-    return () => {
-      if (intervalRef.current !== null) {
-        window.clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [isRunning]);
-
-  const handleStartPause = () => setIsRunning((prev) => !prev);
-  const handleReset = () => {
-    setIsRunning(false);
-    setSecondsElapsed(0);
-  };
-
+export function Timer({ subjectName, elapsedSeconds, isRunning, hasSubject, onToggle, onReset }: TimerProps) {
   return (
     <section className="flex w-full max-w-md flex-col items-center justify-center gap-6 rounded-2xl border border-brown/30 bg-background p-10 text-center">
       <p className="text-lg font-medium text-foreground/80">
@@ -48,20 +20,22 @@ export function Timer({ subjectName }: TimerProps) {
         role="timer"
         aria-live="polite"
       >
-        {formatTime(secondsElapsed)}
+        {formatTime(elapsedSeconds)}
       </p>
       <div className="flex gap-3">
         <button
           type="button"
-          onClick={handleStartPause}
-          className="rounded-lg bg-brown px-6 py-2 font-semibold text-brown-foreground transition-opacity hover:opacity-90"
+          onClick={onToggle}
+          disabled={!hasSubject}
+          className="rounded-lg bg-brown px-6 py-2 font-semibold text-brown-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {isRunning ? "Pausar" : "Iniciar"}
         </button>
         <button
           type="button"
-          onClick={handleReset}
-          className="rounded-lg border border-brown/50 px-6 py-2 font-semibold text-foreground transition-colors hover:bg-brown/10"
+          onClick={onReset}
+          disabled={!hasSubject}
+          className="rounded-lg border border-brown/50 px-6 py-2 font-semibold text-foreground transition-colors hover:bg-brown/10 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Reiniciar
         </button>
